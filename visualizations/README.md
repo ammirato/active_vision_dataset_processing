@@ -1,5 +1,6 @@
 #Visualizations
 Use the code here to visualize our data.
+Replace `Home_01_1` with whichever scene you wish to view 
 ###Visualize our images and bounding boxes, and virtually move around each scene.
 #####Python
   ```
@@ -21,7 +22,6 @@ Use the code here to visualize our data.
     >>>vis_camera_pos_dirs('Home_01_1')
   ``` 
 
- Replace `Home_01_1` with whichever scene you wish to view 
 
 
 
