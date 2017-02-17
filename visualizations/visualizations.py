@@ -1,4 +1,4 @@
-import init as init #has file paths
+#import init as init #has file paths
 import os
 import json
 import matplotlib.pyplot as plt
@@ -7,21 +7,20 @@ from scipy import misc
 import scipy.io as sio
 
 
-def vis_boxes_and_move(scene_name):
+def vis_boxes_and_move(scene_path):
   """ Visualizes bounding boxes and images in the scene.
 
   Allows user to navigate the scene via the movement pointers using the keyboard
 
 
   ARGUMENTS:
-    scene_name: the string name of the scene to view
-                Ex) vis_bounding_boxes('Home_01_1')
+    scene_path: the string full path of the scene to view
+                Ex) vis_camera_pos_dirs('/path/to/data/Home_01_1')
 
   """
 
 
   #set up scene specfic paths
-  scene_path = os.path.join(init.ROHIT_BASE_PATH,scene_name)
   images_path = os.path.join(scene_path,'jpg_rgb')
   annotations_path = os.path.join(scene_path,'annotations.json')
 
@@ -81,6 +80,19 @@ def vis_boxes_and_move(scene_name):
       next_image_name = annotations[cur_image_name]['left']
     elif move_command == 'r':
       next_image_name = annotations[cur_image_name]['right']
+    elif move_command == 'h':
+      next_image_name = cur_image_name
+      print "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n".format(
+            "Enter a character to move around the scene:",
+            "'w' - forward", 
+            "'a' - rotate counter clockwise", 
+            "'s' - backward", 
+            "'d' - rotate clockwise", 
+            "'e' - left", 
+            "'r' - right", 
+            "'q' - quit", 
+            "'h' - print this help menu")
+
 
     #if the user inputted move is valid (there is an image there) 
     #then update the image to display. If the move was not valid, 
@@ -101,12 +113,12 @@ def vis_boxes_and_move(scene_name):
 
 
 
-def vis_camera_pos_dirs(scene_name, plot_directions=True, scale_positions=True):
+def vis_camera_pos_dirs(scene_path, plot_directions=True, scale_positions=True):
   """ Visualizes camera positions and directions in the scene.
 
   ARGUMENTS:
-    scene_name: the string name of the scene to view
-                Ex) vis_camera_pos_dirs('Home_01_1')
+    scene_path: the string full path of the scene to view
+                Ex) vis_camera_pos_dirs('/path/to/data/Home_01_1')
 
   KEYWORD ARGUMENTS:
     plot_directions: bool, whether or not to plot camera directions
@@ -122,7 +134,6 @@ def vis_camera_pos_dirs(scene_name, plot_directions=True, scale_positions=True):
   #TODO - make faster - organize all positions/directions, then plot
 
   #set up scene specfic paths
-  scene_path = os.path.join(init.ROHIT_BASE_PATH,scene_name)
   images_path = os.path.join(scene_path,'jpg_rgb')
   image_structs_path = os.path.join(scene_path,'image_structs.mat')
 
@@ -164,7 +175,6 @@ def vis_camera_pos_dirs(scene_name, plot_directions=True, scale_positions=True):
 
   #for camera in image_structs 
   plt.axis('equal')
-  plt.title(scene_name)
   plt.show()  
   
 

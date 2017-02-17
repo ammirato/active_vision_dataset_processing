@@ -11,7 +11,7 @@ function [] = vis_camera_pos_dirs(scene_name)
 
 
   %initialize contants, paths and file names, etc. 
-  init;
+  init_paths;
 
   %% USER OPTIONS
   view_direction = 1;%should the lines indicating camera direction be drawn?

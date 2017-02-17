@@ -9,7 +9,7 @@ function [] = vis_boxes_and_move(scene_name)
 %TODO - enable more options to be set as input
 %     - avoid reloading current image if invalid move
 
-  init;%set path variables and MATLAB search path
+  init_paths;%set path variables and MATLAB search path
 
   %%USER options
   show_depth = 0;
