@@ -14,8 +14,10 @@ that the directory for each scan.
 ```
 
 ##Running code
-All code is written as functions. See examples below
-for how to run certain functions
+Everything is a function. See examples below
+for how to run certain functions, or look at the README
+in your directory of interest. (Currently `visualizations` 
+is the only interesting one)
 ###Python
 To run a python function from the command line:
   ```
