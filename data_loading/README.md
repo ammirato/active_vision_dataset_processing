@@ -1,6 +1,6 @@
 #DATA LOADING
 
-Here we provide an uncomplete class for loading our data. While it almost certainly
+Here we provide an incomplete class for loading our data. While it almost certainly
 does not do exactly what you want, it may be a good starting point for seeing
 how to access our data.
 
