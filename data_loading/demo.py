@@ -35,7 +35,7 @@ images,labels = dataiter.next()
 ##########not using pytorch, using custom scene list
 
 #use images/labels from these scenes only
-scene_list = ['Home_01_1', 'Home_02_1', 'Home_03_1']
+scene_list = ['Home_001_1', 'Home_002_1', 'Home_003_1']
 
 trainset = active_vision_dataset.AVD(root='/playpen/ammirato/Data/RohitData', 
                                     scene_list=scene_list)
