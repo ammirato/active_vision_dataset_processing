@@ -36,8 +36,8 @@ Use the code here to visualize our data.
 
 
 #DATA LOADING
-A starting point for loading our data in python, with a bias towards pytorch.
-Not meant to be run directly, but to be edited to fit the user's needs. 
+A starting point for loading our data in python. 
+Inlcudes an imcomplete class to use with pytorch.
 
  
 

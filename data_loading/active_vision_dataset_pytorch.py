@@ -1,3 +1,5 @@
+from __future__ import print_function
+import torch.utils.data as data
 from PIL import Image
 import os
 import os.path
@@ -5,10 +7,11 @@ import errno
 import numpy as np
 import sys
 import json
+import torch
 
 images_dir = 'jpg_rgb'
 annotation_filename = 'annotations.json'
-class AVD():
+class AVD(data.Dataset):
   """
   Organizes data from the Active Vision Dataset
 
@@ -53,11 +56,11 @@ class AVD():
       INPUTS:
         root: root directory of all scene folders
 
-      KEYWORD INPUTS(default value):
+      KEYWORD INPUTS:
         train(true): whether to use train or test data(only has an effect if scene_list==None)
         transform(None): function to apply to images before returning them(i.e. normalization)
         target_transform(None): function to apply to labels before returning them
-        scene_list(None): which scenes to get images/labels from, if None use default lists 
+        scene_list(None): which scenes to get images/labels from 
      
     """
 
@@ -89,6 +92,8 @@ class AVD():
 
 
 
+
+
   def __getitem__(self, index):
     """ Gets desired image and label  """
 
@@ -115,6 +120,20 @@ class AVD():
       img = self.transform(img)
     if self.target_transform is not None:
       target = self.target_transform(target)
+
+    #HACK ATTACK
+    #
+    #Here is where things get fishy due to pytorch's DataLoader
+    #Currently I cannot figure out how to return variable size 
+    #arrays for the labels, so every image just gets one box
+    #and gets a background box if it doesn't have any objects
+    #
+    #if there are not bounding boxes in this image, 
+    #make a background box
+    if len(target) == 0:
+      target = [[100, 100, 500,500,0,1]]
+    #only output first box because  idk
+    target = torch.Tensor(np.array(target[0]))  
 
 
     return img, target
