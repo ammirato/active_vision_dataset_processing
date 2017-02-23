@@ -37,8 +37,6 @@ Use the code here to visualize our data.
 
 #DATA LOADING
 A starting point for loading our data in python. 
-Inlcudes an imcomplete class to use with pytorch.
-
  
 
 
