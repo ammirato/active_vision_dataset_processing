@@ -44,7 +44,8 @@ class AVD():
 
 
 
-  def __init__(self, root, train=True, transform=None, target_transform=None, scene_list=None):
+  def __init__(self, root, train=True, transform=None, target_transform=None, 
+               scene_list=None, classification=False):
     """
       Creat instance of AVD class
 
@@ -58,17 +59,23 @@ class AVD():
         transform(None): function to apply to images before returning them(i.e. normalization)
         target_transform(None): function to apply to labels before returning them
         scene_list(None): which scenes to get images/labels from, if None use default lists 
+        classification(False): whether to use cropped images for classification. 
+                               Will crop each box according to labeled box. Then
+                               transforms labels to just id (no box). Each image becomes
+                               a list of numpy arrays, one for each instance. Be careful
+                               using a target_transform with this on, targets must remain
+                               an array with one row per box.
      
     """
 
     self.root = root
     self.transform = transform
     self.target_transform = target_transform
+    self.classification = classification 
     self.train = train # training set or test set
     
     #if no inputted scene list, use defaults 
     if scene_list == None:
-      print('Using default scene list...')
       if self.train:
         scene_list = self.default_train_list
       else:
@@ -105,7 +112,8 @@ class AVD():
   
     #read the image and bounding boxes for this image
     #(doesn't get the movement pointers) 
-    img = Image.open(os.path.join(self.root,scene_name,images_dir,image_name))
+    img = np.asarray(Image.open(os.path.join(self.root,scene_name,
+                                             images_dir,image_name)))
     with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
       annotations = json.load(f)
     target = annotations[image_name]['bounding_boxes']    
@@ -116,6 +124,17 @@ class AVD():
     if self.target_transform is not None:
       target = self.target_transform(target)
 
+    #crop images for classification if flag is set
+    if self.classification:
+      img = np.asarray(img)
+      images = []
+      ids = []
+      for box in target:
+        images.append(img[box[1]:box[3],box[0]:box[2],:])
+        ids.append(box[4])
+      img = images
+      target = ids
+      
 
     return img, target
 

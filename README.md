@@ -13,11 +13,19 @@ that the directory for each scan.
   ROHIT_BASE_PATH = /path/to/dataset/
 ```
 
-##Running code
+#DATA LOADING
+A starting point for loading our data in python for detection
+or classification of instances. See `data_loading/demo.py`
+
+
+#Visualizations
+Use the code here to visualize our data.
+
+
+##Running visualizaion code
 Everything is a function. See examples below
 for how to run certain functions, or look at the README
-in your directory of interest. (Currently `visualizations` 
-is the only interesting one)
+in the visualizations directory 
 ###Python
 To run a python function from the command line:
   ```
@@ -31,12 +39,8 @@ To run a python function from the command line:
 
 
 
-#Visualizations
-Use the code here to visualize our data.
 
 
-#DATA LOADING
-A starting point for loading our data in python. 
  
 
 
