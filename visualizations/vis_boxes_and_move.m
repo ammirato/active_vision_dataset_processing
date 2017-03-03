@@ -46,6 +46,9 @@ function [] = vis_boxes_and_move(scene_name)
     boxes = cur_annotation.bounding_boxes;
     for jl=1:size(boxes,1)
       bbox = double(boxes(jl,:));
+      if(bbox(5) ~=5)
+        continue;
+      end
       rectangle('Position',[bbox(1) bbox(2) (bbox(3)-bbox(1)) (bbox(4)-bbox(2))], ...
                    'LineWidth',3, 'EdgeColor','r');
       if(show_instance_id)

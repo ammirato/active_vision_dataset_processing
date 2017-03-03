@@ -11,6 +11,6 @@ scene_name = sys.argv[2]
 scene_path = os.path.join(ROHIT_BASE_PATH,scene_name)
 
 if function_name == 'vis_boxes_and_move':
-  vis.vis_boxes_and_move(scene_path)
+    vis.vis_boxes_and_move(scene_path)
 elif function_name == 'vis_camera_pos_dirs':
-  vis.vis_camera_pos_dirs(scene_path)
+    vis.vis_camera_pos_dirs(scene_path)
