@@ -16,22 +16,22 @@ Replace `Home_01_1` with whichever scene you wish to view
 #####Python
 Run from the parent direction. (where the `run.py` file is)
   ```
-    python run.py vis_boxes_and_move Home_01_1 
+    python run.py vis_boxes_and_move Home_001_1 
   ``` 
 #####MATLAB
   ```
-    >>>vis_boxes_and_move('Home_01_1')
+    >>>vis_boxes_and_move('Home_001_1')
   ``` 
 
 
 ###Visualize the camera positions and directions in each scene.
 #####Python
   ```
-    python run.py vis_camera_pos_dirs Home_01_1 
+    python run.py vis_camera_pos_dirs Home_001_1 
   ``` 
 #####MATLAB
   ```
-    >>>vis_camera_pos_dirs('Home_01_1')
+    >>>vis_camera_pos_dirs('Home_001_1')
   ``` 
 
 
