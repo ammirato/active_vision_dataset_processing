@@ -17,7 +17,7 @@ With this code, you can:
 
 
 #Visualizations
-Use the code here to visualize our data.
+Use the code here to visualize our data. See the README in this folder for examples.
 
 To get started, edit the `ROHIT_BASE_PATH` variable in `run.py` and/or `init_paths.m`
 to point to the directory that contains our data. i.e. the parent directory 
