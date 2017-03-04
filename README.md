@@ -27,7 +27,7 @@ that the directory for each scan.
   ROHIT_BASE_PATH = /path/to/dataset/
 ```
 
-##Running visualizaion code
+##Running visualization code
 Everything is a function. See examples below
 for how to run certain functions, or look at the README
 in the visualizations directory 
