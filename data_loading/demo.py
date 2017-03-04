@@ -47,10 +47,12 @@ image2,labels2 = trainset[1]
 
 #add more boxes to get more data
 perturb_trans = transforms.AddPerturbedBoxes()#can add custom perturbations
+#add background boxes
+back_trans = transforms.AddBackgroundBoxes()
 #make sure boxes are valid 
 validate_trans = transforms.ValidateMinMaxBoxes()
-#compose the two transformations, validate after peturbing
-target_trans = transforms.Compose([perturb_trans,validate_trans])
+#compose the three transformations, peturbing then add bg then validate 
+target_trans = transforms.Compose([perturb_trans,back_trans,validate_trans])
 
 trainset = active_vision_dataset.AVD(root='/playpen/ammirato/Data/RohitData', 
                                     target_transform=target_trans,
