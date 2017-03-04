@@ -12,8 +12,8 @@ or classification of instances. See `data_loading/demo.py`
 With this code, you can:
 
 1. Get an iterable data structure that gives images and bounding box labels
-2. Use the data structure to crop boxses for classification
-3. Apply pre-defined and custom transfroms to the images and labels 
+2. Use the data structure to crop boxes for classification
+3. Apply pre-defined and custom transforms to the images and labels 
 
 
 #Visualizations
