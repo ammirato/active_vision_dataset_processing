@@ -8,13 +8,13 @@ that the directory for each scan.
 
 ```
   ROHIT_BASE_PATH = /path/to/dataset/
-
+```
 
 
 Replace `Home_01_1` with whichever scene you wish to view 
 ###Visualize our images and bounding boxes, and virtually move around each scene.
 #####Python
-Run from the parent direction. where the (`../run.py`) file is
+Run from the parent direction. (where the `run.py` file is)
   ```
     python run.py vis_boxes_and_move Home_01_1 
   ``` 
