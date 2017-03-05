@@ -243,18 +243,53 @@ class AddBackgroundBoxes(object):
             #check to see if the background box intersects any object box
             good_box = True
             for box in targets:
-                xmin_inter = max(xmin,box[0])
-                ymin_inter = max(ymin,box[1])
-                xmax_inter = min(xmax,box[2])
-                ymax_inter = min(ymax,box[3])
-
-                if (xmax_inter-xmin_inter)*(ymax_inter-ymin_inter) > 0:
+                if not(xmax<box[0] or ymax<box[1] or xmin>box[2] or ymin>box[3]):
                     good_box = False
                     break
 
             if good_box:
                 #make new box, bg id is 0, give difficulty of 0 for now
-                bg_boxes.append([xmin, ymin,xmax,ymax, 0., 0])
+                bg_boxes.append([xmin, ymin,xmax,ymax, 0, 0])
 
         targets.extend(bg_boxes)
         return targets
+
+
+
+
+
+
+class NormalizePlusMinusOne(object):
+    """
+    Changes an image's values so 0->-1 and 255->1
+
+    Assumes image is a numpy array Width x Height x Channels 
+    """ 
+
+    def __init__(self):
+        self.min = -1
+        self.max = 1 
+
+    def __call__(self,image):
+       return (image-127.5)/127.5
+
+
+class DenormalizePlusMinusOne(object):
+    """
+    Changes an image's values so -1->0 and 1->255
+
+    Assumes image is a numpy array Width x Height x Channels, with
+    min=-1 and max=1
+    """ 
+
+    def __init__(self):
+        self.min = -1
+        self.max = 1 
+    
+
+    def __call__(self,image):
+       return (image*127.5) + 127.5
+
+
+
+

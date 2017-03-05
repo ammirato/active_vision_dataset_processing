@@ -23,6 +23,7 @@ print('USE 1: First box difficulty: ' + str(labels[0][5]))
 #using custom scene list, applying a transform
 
 #use images/labels from these scenes only
+#MUST be a list, even for a single scene!
 scene_list = ['Home_001_1', 'Home_002_1', 'Home_003_1']
 
 #get labels from only the first 25 instances
