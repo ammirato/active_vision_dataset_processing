@@ -6,7 +6,7 @@ import numpy as np
 import sys
 import json
 import random
-
+import cv2
 
 
 
@@ -289,6 +289,63 @@ class DenormalizePlusMinusOne(object):
 
     def __call__(self,image):
        return (image*127.5) + 127.5
+
+
+
+
+class ResizeImage(object):
+    """
+    Changes an image's size. 
+
+    Assumes image is a numpy array Width x Height x Channels.
+    Can either:
+        -(default) warp image to new size using OpenCV2 resize 
+        -scale one side, and fill in missing values with 0.
+         Always results in a square image
+
+    """ 
+    #TODO - add crop method 
+          #add fill value
+
+    def __init__(self,size, method='warp'):
+        """
+        initialize resize image transform
+
+        ARGS:
+            size (List[int,int]) - the desired size,  Width x Height
+                                   The number of channels will stay the same
+                                   'fill' method only uses first int to make square
+        KEYWORD ARGS:
+            method (string='warp'): 'warp' - using opencv2's resize function
+                                    'fill' - scale one side, and fill with 0's
+                                             only uses first num of size to
+                                             make a square image
+        """
+        self.size = size
+        self.method = method
+
+    def __call__(self,image):
+        if self.method == 'warp':
+            image = cv2.resize(image,self.size)
+        elif self.method == 'fill':
+            #first reshape the image so the larger
+            #side is the correct size
+            img_size = np.asarray(image.shape)[0:2]
+            scale = float(self.size[0])/ img_size.max()
+            new_size = scale*img_size
+            resized_image = cv2.resize(image,(int(new_size[1]),int(new_size[0])))
+            #now make an image of all 0's that is the 
+            #correct size, and put the resized image inside
+            blank_img = np.zeros((self.size[0],self.size[0],image.shape[2]))
+            blank_img[0:resized_image.shape[0],
+                      0:resized_image.shape[1],
+                                            :] = resized_image
+
+            image = blank_img
+
+        return image
+
+
 
 
 

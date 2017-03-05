@@ -17,8 +17,6 @@ print('USE 1: First box difficulty: ' + str(labels[0][5]))
 
 
 
-
-
 #USE 2 
 #using custom scene list, applying a transform
 
@@ -37,6 +35,14 @@ trainset = active_vision_dataset.AVD(root='/playpen/ammirato/Data/RohitData',
 image,labels = trainset[0]
 #get the next image and its label(s)
 image2,labels2 = trainset[1]
+
+#get a batch of images/labels
+batch_images_labels = trainset[0:10]
+#get the first image/label pair in the batch
+batch_image1, batch_label1 = batch_images_labels[0]
+#get all the images in the batch
+all_images_in_batch = [img for img,_ in batch_images_labels]
+
 
 #5th element(index 4) of each box is the instance id,
 #so here we print out the max index id over all boxes

@@ -104,43 +104,57 @@ class AVD():
         """ Gets desired image and label    """
 
         #get the image name 
-        image_name = self.image_names[index]
+        image_names = self.image_names[index]
 
-        #build the path to the image and annotation file
-        #see format tab on Get Data page on AVD dataset website
-        if image_name[0] == '0':
-            scene_type = 'Home'
-        else:
-            scene_type = 'Office'
-        scene_name = scene_type + "_" + image_name[1:4] + "_" + image_name[4]
-    
-        #read the image and bounding boxes for this image
-        #(doesn't get the movement pointers) 
-        img = np.asarray(Image.open(os.path.join(self.root,scene_name, 
-                                                 images_dir,image_name)))
-        with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
-            annotations = json.load(f)
-        target = annotations[image_name]['bounding_boxes']        
+        #make single name a list
+        if(type(image_names) is not list):
+            image_names = [image_names]
+
+        image_target_list = []
+        for image_name in image_names:
+
+            #build the path to the image and annotation file
+            #see format tab on Get Data page on AVD dataset website
+            if image_name[0] == '0':
+                scene_type = 'Home'
+            else:
+                scene_type = 'Office'
+            scene_name = scene_type + "_" + image_name[1:4] + "_" + image_name[4]
         
-        #apply the transforms                     
-        if self.transform is not None:
-            img = self.transform(img)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        #crop images for classification if flag is set
-        if self.classification:
-            img = np.asarray(img)
-            images = []
-            ids = []
-            for box in target:
-                images.append(img[box[1]:box[3],box[0]:box[2],:])
-                ids.append(box[4])
-            img = images
-            target = ids
+            #read the image and bounding boxes for this image
+            #(doesn't get the movement pointers) 
+            img = np.asarray(Image.open(os.path.join(self.root,scene_name, 
+                                                     images_dir,image_name)))
+            with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
+                annotations = json.load(f)
+            target = annotations[image_name]['bounding_boxes']        
             
+            #apply target transform
+            if self.target_transform is not None:
+                target = self.target_transform(target)
 
-        return img, target
+            #crop images for classification if flag is set
+            if self.classification:
+                img = np.asarray(img)
+                images = []
+                ids = []
+                for box in target:
+                    images.append(img[box[1]:box[3],box[0]:box[2],:])
+                    ids.append(box[4])
+                img = images
+                target = ids
+            
+            #apply image transform    
+            if self.transform is not None:
+                img = self.transform(img)
+
+            image_target_list.append([img,target])
+
+        #special case for single image/label
+        if(len(image_target_list) == 1):
+            image_target_list = image_target_list[0]
+
+        return image_target_list
 
 
 
@@ -296,40 +310,54 @@ class AVD_ByBox():
         """
 
         #get the image name and box
-        image_name,box_index = self.name_and_box_index[index]
+        #image_name,box_index = self.name_and_box_index[index]
+        name_and_index = self.name_and_box_index[index]
+        #name_and_index needs to be alist of lists
+        if(len(name_and_index) >0 and type(name_and_index[0]) is not list): 
+            name_and_index = [name_and_index]        
+ 
+        image_target_list = []
 
-        #build the path to the image and annotation file
-        #see format tab on Get Data page on AVD dataset website
-        if image_name[0] == '0':
-            scene_type = 'Home'
-        else:
-            scene_type = 'Office'
-        scene_name = scene_type + "_" + image_name[1:4] + "_" + image_name[4]
-    
-        #read the image and bounding boxes for this image
-        #(doesn't get the movement pointers) 
-        img = np.asarray(Image.open(os.path.join(self.root,scene_name, 
-                                                 images_dir,image_name)))
-        with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
-            annotations = json.load(f)
-        target = annotations[image_name]['bounding_boxes']        
+        for image_name,box_index in name_and_index:
+            #build the path to the image and annotation file
+            #see format tab on Get Data page on AVD dataset website
+            if image_name[0] == '0':
+                scene_type = 'Home'
+            else:
+                scene_type = 'Office'
+            scene_name = scene_type + "_" + image_name[1:4] + "_" + image_name[4]
         
-        #apply the transforms                     
-        if self.transform is not None:
-            img = self.transform(img)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        #get the single box
-        target = target[box_index]
-
-        #crop images for classification if flag is set
-        if self.classification:
-            img = img[target[1]:target[3],target[0]:target[2],:]
-            target = target[4] 
+            #read the image and bounding boxes for this image
+            #(doesn't get the movement pointers) 
+            img = np.asarray(Image.open(os.path.join(self.root,scene_name, 
+                                                     images_dir,image_name)))
+            with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
+                annotations = json.load(f)
+            target = annotations[image_name]['bounding_boxes']        
             
+            #apply target transform
+            if self.target_transform is not None:
+                target = self.target_transform(target)
 
-        return img, target
+            #get the single box
+            target = target[box_index]
+
+            #crop images for classification if flag is set
+            if self.classification:
+                img = img[target[1]:target[3],target[0]:target[2],:]
+                target = target[4] 
+           
+            #apply image transform     
+            if self.transform is not None:
+                img = self.transform(img)
+
+            image_target_list.append([img,target])
+
+        #special case for single image/label
+        if(len(image_target_list) == 1):
+            image_target_list = image_target_list[0]
+
+        return image_target_list
 
 
 
