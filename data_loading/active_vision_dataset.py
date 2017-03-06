@@ -123,8 +123,8 @@ class AVD():
         
             #read the image and bounding boxes for this image
             #(doesn't get the movement pointers) 
-            img = np.asarray(Image.open(os.path.join(self.root,scene_name, 
-                                                     images_dir,image_name)))
+            img = (Image.open(os.path.join(self.root,scene_name, 
+                                           images_dir,image_name)))
             with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
                 annotations = json.load(f)
             target = annotations[image_name]['bounding_boxes']        
@@ -139,8 +139,14 @@ class AVD():
                 images = []
                 ids = []
                 for box in target:
-                    images.append(img[box[1]:box[3],box[0]:box[2],:])
+                    cur_img = Image.fromarray(img[box[1]:box[3],
+                                                  box[0]:box[2],
+                                                             :])
+                    if self.transform is not None:
+                        cur_img = self.transform(cur_img)
+                    images.append(cur_img)
                     ids.append(box[4])
+
                 img = images
                 target = ids
             
@@ -329,8 +335,8 @@ class AVD_ByBox():
         
             #read the image and bounding boxes for this image
             #(doesn't get the movement pointers) 
-            img = np.asarray(Image.open(os.path.join(self.root,scene_name, 
-                                                     images_dir,image_name)))
+            img = (Image.open(os.path.join(self.root,scene_name, 
+                                           images_dir,image_name)))
             with open(os.path.join(self.root,scene_name,annotation_filename)) as f:
                 annotations = json.load(f)
             target = annotations[image_name]['bounding_boxes']        
@@ -344,8 +350,11 @@ class AVD_ByBox():
 
             #crop images for classification if flag is set
             if self.classification:
+                img = np.asarray(img)
                 img = img[target[1]:target[3],target[0]:target[2],:]
+                img = Image.fromarray(img)
                 target = target[4] 
+        
            
             #apply image transform     
             if self.transform is not None:

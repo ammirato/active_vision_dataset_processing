@@ -1,3 +1,4 @@
+import torch
 from PIL import Image
 import os
 import os.path
@@ -9,7 +10,75 @@ import random
 import cv2
 
 
+#Below are the transforms that depend on torch
+#Delete these to remove the torch dependency
+class ToTensor(object):
+    """
+    Converts PIL image to tensor. Does NOT normalize 
 
+    Copied from 
+    https://github.com/pytorch/vision/blob/master/torchvision/transforms.py
+
+    """    
+
+    def __call__(self,pil_img):
+
+        # handle PIL Image
+        img = torch.ByteTensor(torch.ByteStorage.from_buffer(pil_img.tobytes()))
+        # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
+        if pil_img.mode == 'YCbCr':
+            nchannel = 3
+        else:
+            nchannel = len(pil_img.mode)
+        img = img.view(pil_img.size[1], pil_img.size[0], nchannel)
+        # put it from HWC to CHW format
+        # yikes, this transpose takes 80% of the loading time/CPU
+        img = img.transpose(0, 1).transpose(0, 2).contiguous() 
+        return img
+
+
+
+class NormalizePlusMinusOne(object):
+    """
+    Changes an tensors's values so 0->-1 and 255->1
+
+    Assumes input is a tensor with values in [0,255] 
+    """ 
+
+    def __call__(self,tensor):
+       return (tensor.float()-127.5)/127.5
+
+
+class DenormalizePlusMinusOne(object):
+    """
+    Changes an tensors's values so -1->0 and 1->255
+
+    Assumes input is a tensor with values in [-1,1] 
+    """ 
+
+    def __call__(self,tensor):
+       return (tensor.float()*127.5) + 127.5
+
+
+
+class ToPILImage(object):
+    """
+    Converts tensor to PIL Image. Does not change any values in tensor.
+
+    Copied from 
+    https://github.com/pytorch/vision/blob/master/torchvision/transforms.py
+    """
+
+    def __call__(self,tensor):
+        npimg = tensor.numpy()
+        npimg = np.transpose(npimg,(1,2,0))
+        return Image.fromarray(npimg.astype(np.uint8)) 
+
+
+
+
+## END TORCH DEPENDENCY
+##############################################################################
 
 
 
@@ -37,6 +106,10 @@ class Compose(object):
           for t in self.transforms:
               data = t(data)
           return data 
+
+
+
+
 
 
 
@@ -259,45 +332,15 @@ class AddBackgroundBoxes(object):
 
 
 
-class NormalizePlusMinusOne(object):
-    """
-    Changes an image's values so 0->-1 and 255->1
-
-    Assumes image is a numpy array Width x Height x Channels 
-    """ 
-
-    def __init__(self):
-        self.min = -1
-        self.max = 1 
-
-    def __call__(self,image):
-       return (image-127.5)/127.5
-
-
-class DenormalizePlusMinusOne(object):
-    """
-    Changes an image's values so -1->0 and 1->255
-
-    Assumes image is a numpy array Width x Height x Channels, with
-    min=-1 and max=1
-    """ 
-
-    def __init__(self):
-        self.min = -1
-        self.max = 1 
-    
-
-    def __call__(self,image):
-       return (image*127.5) + 127.5
 
 
 
 
 class ResizeImage(object):
     """
-    Changes an image's size. 
+    Changes an image's size. Input assumed to be PIL image. 
 
-    Assumes image is a numpy array Width x Height x Channels.
+    Assumes image is PIL image Width x Height x Channels.
     Can either:
         -(default) warp image to new size using OpenCV2 resize 
         -scale one side, and fill in missing values with 0.
@@ -325,6 +368,7 @@ class ResizeImage(object):
         self.method = method
 
     def __call__(self,image):
+        image = np.asarray(image)
         if self.method == 'warp':
             image = cv2.resize(image,self.size)
         elif self.method == 'fill':
@@ -343,6 +387,7 @@ class ResizeImage(object):
 
             image = blank_img
 
+        image = Image.fromarray(image.astype(np.uint8))
         return image
 
 

@@ -55,7 +55,6 @@ print('\nUSE 2: Max instance id (will be <25): ' + str(max(np.asarray(labels2)[:
 #crop images around boxes for classification, 
 #add some perturbed boxes, validate the boxes
 
-
 #add more boxes to get more data
 perturb_trans = transforms.AddPerturbedBoxes()#can add custom perturbations
 #add background boxes
@@ -108,9 +107,6 @@ print('\nUSE 4 label: ' + str(label))
 
 #USE 5 
 #Get one box at a time, classification, pick instances 
-trainset = active_vision_dataset.AVD_ByBox(root='/playpen/ammirato/Data/RohitData')
-
-
 image,label = trainset[0] #gives first image, first box
 image,label = trainset[1] #gives either:
                           #        first image, second box (if their is a second box)
