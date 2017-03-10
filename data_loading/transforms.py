@@ -8,7 +8,7 @@ import sys
 import json
 import random
 import cv2
-
+import collections
 
 #Below are the transforms that depend on torch
 #Delete these to remove the torch dependency
@@ -21,19 +21,26 @@ class ToTensor(object):
 
     """    
 
-    def __call__(self,pil_img):
+    def __call__(self,in_img):
 
-        # handle PIL Image
-        img = torch.ByteTensor(torch.ByteStorage.from_buffer(pil_img.tobytes()))
-        # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
-        if pil_img.mode == 'YCbCr':
-            nchannel = 3
+        if isinstance(in_img,np.ndarray):
+            img = np.transpose(in_img,(2,0,1))
+            img = torch.from_numpy(img)
+        elif isinstance(in_img,list):
+            img = np.asarray(in_img)
+            img = torch.from_numpy(img)
         else:
-            nchannel = len(pil_img.mode)
-        img = img.view(pil_img.size[1], pil_img.size[0], nchannel)
-        # put it from HWC to CHW format
-        # yikes, this transpose takes 80% of the loading time/CPU
-        img = img.transpose(0, 1).transpose(0, 2).contiguous() 
+            # handle PIL Image
+            img = torch.ByteTensor(torch.ByteStorage.from_buffer(in_img.tobytes()))
+            # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
+            if in_img.mode == 'YCbCr':
+                nchannel = 3
+            else:
+                nchannel = len(in_img.mode)
+            img = img.view(in_img.size[1], in_img.size[0], nchannel)
+            # put it from HWC to CHW format
+            # yikes, this transpose takes 80% of the loading time/CPU
+            img = img.transpose(0, 1).transpose(0, 2).contiguous() 
         return img
 
 
@@ -330,6 +337,39 @@ class AddBackgroundBoxes(object):
 
 
 
+class MakeIdsConsecutive(object):
+    """
+    Maps class ids to be consecutive, starting at 0
+
+    If the used ids are [2,6,19] they will become [0,1,2]
+    """
+
+    def __init__(self, original_ids):
+        """
+        ARGS:
+            original_ids (List[int,...]): the original ids used
+        """
+
+        self.original_ids = original_ids
+        id_map = {} 
+        for il in range(len(original_ids)):
+           id_map[original_ids[il]] = il 
+       
+        self.id_map = id_map 
+
+    def __call__(self,boxes):
+        if isinstance(boxes[0], collections.Iterable):
+            for il in range(len(boxes)):
+                boxes[il][4] = self.id_map[boxes[il][4]]
+        else: #assume just one box
+            boxes[il][4] = self.id_map[boxes[il][4]]
+            
+        return boxes 
+
+        
+
+
+
 
 
 
@@ -338,9 +378,9 @@ class AddBackgroundBoxes(object):
 
 class ResizeImage(object):
     """
-    Changes an image's size. Input assumed to be PIL image. 
+    Changes an image's size. input assumed to be PIL or numpy image. 
 
-    Assumes image is PIL image Width x Height x Channels.
+    Assumes image Width x Height x Channels., outputs numpy image
     Can either:
         -(default) warp image to new size using OpenCV2 resize 
         -scale one side, and fill in missing values with 0.
@@ -368,16 +408,27 @@ class ResizeImage(object):
         self.method = method
 
     def __call__(self,image):
-        image = np.asarray(image)
+
+        if not(isinstance(image,np.ndarray)):
+            image = np.asarray(image)
+
         if self.method == 'warp':
             image = cv2.resize(image,self.size)
+
         elif self.method == 'fill':
             #first reshape the image so the larger
             #side is the correct size
             img_size = np.asarray(image.shape)[0:2]
             scale = float(self.size[0])/ img_size.max()
-            new_size = scale*img_size
+            new_size = np.round(scale*img_size)
+            #no dimension can be 0
+            if(new_size[0] == 0):
+                new_size[0] = 1
+            if(new_size[1] == 0):
+                new_size[1] = 1
+            
             resized_image = cv2.resize(image,(int(new_size[1]),int(new_size[0])))
+            breakp=1
             #now make an image of all 0's that is the 
             #correct size, and put the resized image inside
             blank_img = np.zeros((self.size[0],self.size[0],image.shape[2]))
@@ -387,7 +438,6 @@ class ResizeImage(object):
 
             image = blank_img
 
-        image = Image.fromarray(image.astype(np.uint8))
         return image
 
 
