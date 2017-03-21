@@ -45,6 +45,29 @@ class ToTensor(object):
 
 
 
+
+class ToNumpyRGB(object):
+    """
+    Converts tensor CxHxW to numpy HxWxC, RGB.
+
+
+    """
+    def __call__(self,in_img):
+
+        #make sure tensor is on cpu before converting to numpy
+        npimg = in_img.cpu().numpy()
+        #make HxWxC
+        npimg = np.transpose(npimg,(1,2,0))
+        #npimg is now in BGR format, so need to convert to RGB
+        red_channel = npimg[:,:,2].copy()
+        blue_channel = npimg[:,:,0].copy() 
+        green_channel = npimg[:,:,1].copy() 
+        npimg[:,:,0] = red_channel
+        npimg[:,:,1] = blue_channel
+        npimg[:,:,2] = green_channel
+        
+        return npimg
+
 class NormalizePlusMinusOne(object):
     """
     Changes an tensors's values so 0->-1 and 255->1
@@ -167,19 +190,23 @@ class AddPerturbedBoxes(object):
       num_to_add (int): how many boxes to add PER INSTANCE. 
       changes (List[List[int,int],...]): range of values that can be
                                          added to each box field
+      replace (Bool: True): whether or not to replace the original box.
+                            if True, the original box is removed
 
       ex) transforms.AddPerturbedBoxes(num_to_add=3,
-                                       changes = [[-20,10],
-                                                  [-20,10],
-                                                  [-10,20]
-                                                  [-10,20]])
+                                       changes = [[-20,5],
+                                                  [-20,5],
+                                                  [-5,20]
+                                                  [-5,20]])
           #adds 3 boxes per instance
-          #each side of box can move up to 10 pixel in each direction
+          #each side of box can move in each direction
           #these are the defaults
     """ 
 
 
-    def __init__(self,num_to_add=3,changes=[[-20,10],[-20,10],[-10,20],[-10,20]]):
+    def __init__(self,num_to_add=3,
+                      changes=[[-20,5],[-20,5],[-5,20],[-5,20]],
+                      replace=True):
       self.num_to_add = num_to_add;
       self.changes = changes;
 
@@ -187,7 +214,8 @@ class AddPerturbedBoxes(object):
     def __call__(self, targets):
       new_targets = []
       for box in targets:
-        new_targets.append(box) #keep the original box
+        if not(replace):
+            new_targets.append(box) #keep the original box
         
         for il in range(self.num_to_add):
           perturbed_box = list(box)#make a new box that will be changed
@@ -358,6 +386,8 @@ class MakeIdsConsecutive(object):
         self.id_map = id_map 
 
     def __call__(self,boxes):
+        if len(boxes) == 0:
+            return boxes
         if isinstance(boxes[0], collections.Iterable):
             for il in range(len(boxes)):
                 boxes[il][4] = self.id_map[boxes[il][4]]
