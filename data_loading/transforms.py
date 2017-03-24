@@ -209,12 +209,12 @@ class AddPerturbedBoxes(object):
                       replace=True):
       self.num_to_add = num_to_add;
       self.changes = changes;
-
+      self.replace = replace
     
     def __call__(self, targets):
       new_targets = []
       for box in targets:
-        if not(replace):
+        if not(self.replace):
             new_targets.append(box) #keep the original box
         
         for il in range(self.num_to_add):
@@ -473,5 +473,73 @@ class ResizeImage(object):
 
 
 
+class CombineInstances(object):
+    """
+    Assigns a single label the boxes from a group of instances
 
+    INPUTS:
+        id_list(List[int]): list of ids to combine. Boxes for all of these
+                            ids will be reassigned the id of the first 
+                            id in the list
+
+    """
+
+    def __init__(self, id_list):
+        self.id_list = id_list
+
+    def __call__(self,targets):
+        index = 0
+        for box in targets:
+            if box[4] in self.id_list:
+                targets[index][4] = self.id_list[0]
+            index +=1
+        return targets
+
+
+
+
+
+class AddRandomBoxes(object):
+    """
+    Adds a number of random boxes to each image.
+
+
+    KEYWORD ARGS:
+      num_to_add (int) = 2: how many boxes to add PER IMAGE. 
+      box_dimensions_range(List[List[int,int]List[int,int]]) = [5,5,300,300]: 
+                           boxes [min_width,min_height, max_width, max_height] 
+      image_dimensions (List[int,int]) = [1920,1080]: width, height of image
+
+      ex) transforms.AddRandomBoxes(num_to_add=2,
+                                        box_dimensions_range=[100,100,200,200])
+
+          #adds 2 boxes per image 
+          #each box will be between 100x100 and 200x200 
+    """ 
+
+
+    def __init__(self,num_to_add=2,box_dimensions_range=[5,5,300,300],
+                 image_dimensions=[1920,1080]):
+        self.num_to_add = num_to_add
+        self.box_dims = box_dimensions_range
+        self.image_dims = image_dimensions
+    
+    def __call__(self, targets):
+        bg_boxes = []
+   
+        while(len(bg_boxes) < self.num_to_add):
+            #make a new bg_box
+            xmin = random.randint(0,self.image_dims[0]-self.box_dims[0]) 
+            ymin = random.randint(0,self.image_dims[1]-self.box_dims[1]) 
+            width = random.randint(self.box_dims[0],self.box_dims[2]) 
+            height = random.randint(self.box_dims[1],self.box_dims[3])
+            xmax = min(self.image_dims[0],xmin+width)
+            ymax = min(self.image_dims[1],ymin+height)
+            
+            
+            #make new box, id is -1, give difficulty of 0 for now
+            bg_boxes.append([xmin, ymin,xmax,ymax, -1, 0])
+
+        targets.extend(bg_boxes)
+        return targets
 

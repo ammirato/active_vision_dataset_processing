@@ -223,8 +223,7 @@ class AVD_ByBox():
     Organizes data from the Active Vision Dataset
 
     Different from AVD in that this class returns only a single 
-    image and bounding box per index, for classification or detection
-   
+    image and bounding box per index, for classification or detection.
     All boxes are still present, they will just require multiple indexes
     to access. 
 
@@ -304,6 +303,7 @@ class AVD_ByBox():
 
         #get all the image names
         image_names = []
+        boxes = []
         name_and_box_index = []
         for scene in self.scene_list:
             #get image names for this scene
@@ -424,3 +424,40 @@ class AVD_ByBox():
                      os.path.isfile(os.path.join(root,scene_name,annotation_filename))):
                 return False
         return True
+
+
+
+    def get_count_by_class(self, num_classes):
+        """
+        Returns a count of how many labels there are per class
+
+        ARGS:
+            num_classes: The number of classes that are present
+        """
+
+        count_by_class = np.zeros(num_classes) 
+         
+        for scene in self.scene_list:
+            #get image names for this scene
+            cur_image_names = os.listdir(os.path.join(self.root,   
+                                                      scene,
+                                                      images_dir))
+            #sort them so they are in a known order
+            cur_image_names.sort() 
+
+            #get annotations for this scene
+            with open(os.path.join(self.root,scene,annotation_filename)) as f:
+                annotations = json.load(f)
+
+            #for each image, get the boxes desired 
+            for name in cur_image_names:  
+                target = annotations[name]['bounding_boxes']  
+                if self.target_transform is not None:
+                    target = self.target_transform(target)
+              
+                #for each box, record name and box
+                for kl in range(len(target)):
+                    count_by_class[target[kl][4]] += 1    
+    
+        return count_by_class        
+
