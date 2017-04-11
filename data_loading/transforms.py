@@ -46,27 +46,54 @@ class ToTensor(object):
 
 
 
-class ToNumpyRGB(object):
+class ToNumpy(object):
     """
-    Converts tensor CxHxW to numpy HxWxC, RGB.
+    Converts tensor CxHxW to numpy HxWxC.
 
 
     """
     def __call__(self,in_img):
 
+        #remove batch demension
+        if len(in_img.size()) == 4:
+            in_img = in_img.squeeze(0)
+
         #make sure tensor is on cpu before converting to numpy
         npimg = in_img.cpu().numpy()
         #make HxWxC
         npimg = np.transpose(npimg,(1,2,0))
-        #npimg is now in BGR format, so need to convert to RGB
-        red_channel = npimg[:,:,2].copy()
-        blue_channel = npimg[:,:,0].copy() 
-        green_channel = npimg[:,:,1].copy() 
-        npimg[:,:,0] = red_channel
-        npimg[:,:,1] = blue_channel
-        npimg[:,:,2] = green_channel
         
         return npimg
+
+
+class BGRToRGB(object):
+    """
+    Converts BGR numpy image to RGB.
+
+
+    """
+    def __call__(self,in_img):
+
+        b = in_img[:,:,0] 
+        g = in_img[:,:,1] 
+        r = in_img[:,:,2] 
+
+        return np.stack((r,g,b),axis=2)
+
+class RGBToBGR(object):
+    """
+    Converts RGB numpy image to BGR.
+
+
+    """
+    def __call__(self,in_img):
+
+        r = in_img[:,:,0] 
+        g = in_img[:,:,1] 
+        b = in_img[:,:,2] 
+
+        return np.stack((b,g,r),axis=2)
+
 
 class NormalizePlusMinusOne(object):
     """
@@ -90,6 +117,25 @@ class DenormalizePlusMinusOne(object):
        return (tensor.float()*127.5) + 127.5
 
 
+class NormalizeRange(object):
+    """
+    Changes an tensors's values to be in the given range.
+
+    Follows http://stackoverflow.com/questions/5294955/how-to-scale-down-a-range-of-numbers-with-a-known-min-and-max-value 
+
+    """ 
+    def __init__(self,mmin,mmax):
+        self.min = mmin
+        self.max = mmax
+
+    def __call__(self,tensor):
+        #shift to centered around zero, scale, shift to min/max 
+        
+        cur_max = 255.0#tensor.max()
+        cur_min = 0.0#tensor.min()    
+        scale = (self.max-self.min)/(cur_max-cur_min)
+
+        return scale*(tensor.float() - cur_min) + self.min 
 
 class ToPILImage(object):
     """
@@ -156,24 +202,29 @@ class PickInstances(object):
     """
 
 
-    def __init__(self, instance_ids):
-      """
-      Defines which instances to keep
+    def __init__(self, instance_ids, max_difficulty=None):
+        """
+        Defines which instances to keep
 
-      ARGUMENTS:
+        ARGUMENTS:
         instance_ids: which instances to keep, identified by their int id
 
-      ex) PickInstance([3,5,11,19])
-      """ 
-      self.instance_ids = instance_ids
+        KEYWORD ARGS:
+        max_difficulty (int)=None: pick boxes with smaller difficulty than this
 
+        ex) PickInstance([3,5,11,19])
+        """ 
+        self.instance_ids = instance_ids
+        self.max_difficulty = max_difficulty 
 
     def __call__(self,target):
-      selected_targets = [] 
-      for box in target:
-        if box[4] in self.instance_ids:
-          selected_targets.append(box)
-      return selected_targets
+        selected_targets = [] 
+        for box in target:
+            if box[4] in self.instance_ids:
+                if (self.max_difficulty is None or 
+                                            box[5] <= self.max_difficulty): 
+                    selected_targets.append(box)
+        return selected_targets
       
      
 
@@ -206,25 +257,39 @@ class AddPerturbedBoxes(object):
 
     def __init__(self,num_to_add=3,
                       changes=[[-20,5],[-20,5],[-5,20],[-5,20]],
-                      replace=True):
+                      replace=True,
+                      percents=False):
       self.num_to_add = num_to_add;
       self.changes = changes;
       self.replace = replace
-    
+      self.percents = percents   
+ 
+
     def __call__(self, targets):
       new_targets = []
       for box in targets:
         if not(self.replace):
             new_targets.append(box) #keep the original box
-        
+      
+        changes = list(self.changes)
+        if self.percents:
+          width = box[2]- box[0]
+          height = box[3] - box[1] 
+          changes[0] = [self.changes[0][0]*width,self.changes[0][1]*width]   
+          changes[1] = [self.changes[1][0]*height,self.changes[1][1]*height]   
+          changes[2] = [self.changes[2][0]*width,self.changes[2][1]*width]   
+          changes[3] = [self.changes[3][0]*height,self.changes[3][1]*height]   
+
+          changes = [[int(x),int(y)] for x,y in changes]
+ 
         for il in range(self.num_to_add):
           perturbed_box = list(box)#make a new box that will be changed
 
           for jl in range(4):
           #TODO add index range var to allow different box formats
             #jitter each side of the original box
-            perturbed_box[jl] = box[jl] + random.randint(self.changes[jl][0],
-                                                        self.changes[jl][1])   
+            perturbed_box[jl] = box[jl] + random.randint(changes[jl][0],
+                                                         changes[jl][1])   
 
           new_targets.append(perturbed_box) #add the perturbed box
 
@@ -262,7 +327,7 @@ class ValidateMinMaxBoxes(object):
       #      not completely correct, could widen more
       new_targets = []
       for box in targets:
-
+        box = list(box)
         #ensure box is inside image
         if(box[0] < 0):
           box[0] = 0
@@ -337,7 +402,8 @@ class AddBackgroundBoxes(object):
     
     def __call__(self, targets):
         bg_boxes = []
-   
+  
+        counter = 0 
         while(len(bg_boxes) < self.num_to_add):
             #make a new bg_box
             xmin = random.randint(0,self.image_dims[0]-self.box_dims[0]) 
@@ -358,9 +424,22 @@ class AddBackgroundBoxes(object):
             if good_box:
                 #make new box, bg id is 0, give difficulty of 0 for now
                 bg_boxes.append([xmin, ymin,xmax,ymax, 0, 0])
+                counter = 0
 
-        targets.extend(bg_boxes)
-        return targets
+            if counter > 100:
+                print 'No background box fits'
+                bg_boxes.append([xmin, ymin,xmax,ymax, 0, 0])
+                counter = 100
+  
+        #do not return references to original target 
+        all_boxes = bg_boxes 
+        for box in targets:
+            box = list(box)
+            all_boxes.append(box)
+        return all_boxes
+
+        #targets.extend(bg_boxes)
+        #return targets
 
 
 
@@ -385,16 +464,25 @@ class MakeIdsConsecutive(object):
        
         self.id_map = id_map 
 
-    def __call__(self,boxes):
-        if len(boxes) == 0:
-            return boxes
-        if isinstance(boxes[0], collections.Iterable):
-            for il in range(len(boxes)):
-                boxes[il][4] = self.id_map[boxes[il][4]]
-        else: #assume just one box
-            boxes[il][4] = self.id_map[boxes[il][4]]
-            
-        return boxes 
+    def __call__(self,targets):
+        consecutive_targets = []
+        for box in targets:
+            box = list(box)
+            box[4] = self.id_map[box[4]]
+            consecutive_targets.append(box) 
+
+        return consecutive_targets
+
+
+#        if len(boxes) == 0:
+#            return boxes
+#        if isinstance(boxes[0], collections.Iterable):
+#            for il in range(len(boxes)):
+#                boxes[il][4] = self.id_map[boxes[il][4]]
+#        else: #assume just one box
+#            boxes[il][4] = self.id_map[boxes[il][4]]
+#            
+#        return boxes 
 
         
 
@@ -456,9 +544,9 @@ class ResizeImage(object):
                 new_size[0] = 1
             if(new_size[1] == 0):
                 new_size[1] = 1
-            
+
+
             resized_image = cv2.resize(image,(int(new_size[1]),int(new_size[0])))
-            breakp=1
             #now make an image of all 0's that is the 
             #correct size, and put the resized image inside
             blank_img = np.zeros((self.size[0],self.size[0],image.shape[2]))
@@ -488,12 +576,15 @@ class CombineInstances(object):
         self.id_list = id_list
 
     def __call__(self,targets):
+        new_targets = []
         index = 0
         for box in targets:
+            box = list(box)
             if box[4] in self.id_list:
                 targets[index][4] = self.id_list[0]
             index +=1
-        return targets
+            new_targets.append(box)
+        return new_targets
 
 
 
@@ -540,6 +631,14 @@ class AddRandomBoxes(object):
             #make new box, id is -1, give difficulty of 0 for now
             bg_boxes.append([xmin, ymin,xmax,ymax, -1, 0])
 
-        targets.extend(bg_boxes)
-        return targets
+
+        #do not return references to original target 
+        all_boxes = bg_boxes 
+        for box in targets:
+            box = list(box)
+            all_boxes.append(box)
+        return all_boxes
+
+        #targets.extend(bg_boxes)
+        #return targets
 

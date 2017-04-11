@@ -1,10 +1,13 @@
+import torch
 import active_vision_dataset
+import active_vision_dataset_pytorch
 import transforms
 import numpy as np
 
 
 #USE 1
 #basic use for getting images/labels for detection
+
 trainset = active_vision_dataset.AVD(root='/playpen/ammirato/Data/RohitData')
                                     
 #get an image and its label(s) 
@@ -106,7 +109,10 @@ print('\nUSE 4 label: ' + str(label))
 
 
 #USE 5 
-#Get one box at a time, classification, pick instances 
+#Get one box at a time, classification
+trainset = active_vision_dataset.AVD_ByBox(root='/playpen/ammirato/Data/RohitData',
+                                           classification=True)
+
 image,label = trainset[0] #gives first image, first box
 image,label = trainset[1] #gives either:
                           #        first image, second box (if their is a second box)
@@ -122,7 +128,11 @@ image,label = trainset[1] #gives either:
 #get labels from only instance 5, 7, 23 
 target_trans = transforms.PickInstances([5,7,23])
 
-trainset = active_vision_dataset.AVD_ByBox(root='/playpen/ammirato/Data/RohitData',
+
+image_trans = transforms.Compose([transforms.ToTensor(),transforms.NormalizeRange(1,3.5)])
+
+trainset = active_vision_dataset_pytorch.AVD_ByBox(root='/playpen/ammirato/Data/RohitData',
+                                            transform=image_trans,
                                            target_transform=target_trans,
                                             classification=True)
 image,label = trainset[0]
