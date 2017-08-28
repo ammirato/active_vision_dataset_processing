@@ -15,16 +15,28 @@ perturb_trans = transforms.AddPerturbedBoxes(num_to_add=3,
                                                            [-.45,.45], 
                                                            [-.45,.45]],
                                                 percents=True)
+
+pick_trans = transforms.PickInstances(range(5),
+                                     max_difficulty=5)
+
+
+
+
+
+
+
 target_trans = transforms.Compose([
+                                        pick_trans,
                                        #combine_trans,
                                        #perturb_trans,
-                                       to_tensor_trans])
+                                       #to_tensor_trans]
+                                ])
 
 
 trainset = active_vision_dataset_pytorch.AVD(root='/playpen/ammirato/Data/RohitData',
                                              transform=to_tensor_trans,
                                              target_transform=target_trans,
-                                             classification=True,
+                                             classification=False,
                                              by_box=True)
                                     
 #get an image and its label(s) 
@@ -37,7 +49,7 @@ image,labels = trainset[0]
 
 
 trainloader = torch.utils.data.DataLoader(trainset,
-                                      batch_size=1,
+                                      batch_size=10,
                                       shuffle=True,
                                       collate_fn=active_vision_dataset_pytorch.collate)
 

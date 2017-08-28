@@ -119,23 +119,50 @@ class DenormalizePlusMinusOne(object):
 
 class NormalizeRange(object):
     """
-    Changes an tensors's values to be in the given range.
+    Changes an tensors's values to be in a given range.
+
+    Assumes original values are [0,255], unless args set
+   
+    ARGS:
+        to_min: new min value  
+        to_max: new max value  
+
+    KEYWORD ARGS:
+        from_min(Float=0.0): the orignal distributions min value
+        from_max(Float=255.0): the orignal distributions max value
 
     Follows http://stackoverflow.com/questions/5294955/how-to-scale-down-a-range-of-numbers-with-a-known-min-and-max-value 
 
     """ 
-    def __init__(self,mmin,mmax):
-        self.min = mmin
-        self.max = mmax
+    def __init__(self,to_min,to_max,from_min=0.0,from_max=255.0):
+        self.to_min = to_min
+        self.to_max = to_max 
+        self.from_min = from_min
+        self.from_max = from_max
 
     def __call__(self,tensor):
-        #shift to centered around zero, scale, shift to min/max 
-        
-        cur_max = 255.0#tensor.max()
-        cur_min = 0.0#tensor.min()    
-        scale = (self.max-self.min)/(cur_max-cur_min)
+        scale = (self.to_max-self.to_min)/(self.from_max-self.from_min)
+        return scale*(tensor.float() - self.from_min) + self.to_min 
 
-        return scale*(tensor.float() - cur_min) + self.min 
+
+class MeanSTDNormalize(object):
+    """
+    Normalizes a numpy array values by (array-mean)/std
+
+    Assumes array, mean, std have same number of channels
+
+    KWARGS: 
+        mean
+        std
+    """
+    #TODO: add functionality for tensors
+
+    def __init__(self,mean=0,std=1):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self,array):
+           return (array-self.mean)/self.std 
 
 class ToPILImage(object):
     """
@@ -531,7 +558,7 @@ class ResizeImage(object):
             image = np.asarray(image)
 
         if self.method == 'warp':
-            image = cv2.resize(image,self.size)
+            image = cv2.resize(image,tuple(self.size[0:2]))
 
         elif self.method == 'fill':
             #first reshape the image so the larger

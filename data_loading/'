@@ -62,7 +62,7 @@ class AVD(object):
 
     """
     #TODO - too much copy/paste with AVD
-    #     - allow __getitem__ to take a name
+    #     - allow __get_item__ to take a name
     #     - fix problems when not all chosen ids are present
     #       i.e in count by class, class_id_to_name, etc
 
@@ -92,7 +92,7 @@ class AVD(object):
 
     def __init__(self, root, train=True, transform=None, target_transform=None, 
                  scene_list=None, classification=False, preload_images=False,
-                 by_box=False, class_id_to_name=None, fraction_of_no_box=1):
+                 by_box=False, class_id_to_name=None):
         """
         Create instance of AVDd class
 
@@ -128,8 +128,6 @@ class AVD(object):
                                   Assumes original class ids, any changes
                                   to ids via a target transform will 
                                   be applied by this object.  
-          fraction_of_no_box(float=1): fraction of images without a ground
-                                     truth box to keep(1 keeps all of them)
                  
         """
 
@@ -139,8 +137,7 @@ class AVD(object):
         self.classification = classification 
         self.train = train # training set or test set
         self.class_id_to_name = class_id_to_name 
-        self.fraction_of_no_box = fraction_of_no_box       
- 
+        
         #if no inputted scene list, use defaults 
         if scene_list == None:
             if self.train:
@@ -165,27 +162,19 @@ class AVD(object):
                                                       images_dir))) 
             #sort them so they are in a know order, scenes stay together
             cur_image_names.sort()
-            used_image_names = []
-            #image_names.extend(cur_image_names)
+            image_names.extend(cur_image_names)
 
             #get annotations
             with open(os.path.join(self.root,scene,annotation_filename)) as f:
                 annotations = json.load(f)
             for name in cur_image_names:  
-                target = annotations[name]['bounding_boxes']
-                transformed_target = self.target_transform(list(target))
-                if  transformed_target == [] or (len(transformed_target) == 1 and transformed_target[0][4] == 0):
-                    if np.random.rand() > self.fraction_of_no_box:
-                        continue 
+                target = annotations[name]['bounding_boxes']  
                 init_targets[name] = list(target)
                 cur_navs = annotations[name] 
                 cur_navs.pop('bounding_boxes')
                 init_navs[name] = cur_navs
                 name_to_index[name] = index
                 index += 1 
-                used_image_names.append(name)
-
-            image_names.extend(used_image_names)
 
         self.image_names = image_names
         self.init_targets = init_targets 
@@ -206,75 +195,44 @@ class AVD(object):
 
 
 
-
-
-
     def __set_name_and_box_index_list__(self):
+        image_names = []
         name_and_box_index = []
+        init_targets = {}        
 
-        for name in self.image_names:
-            target = self.init_targets[name]
-            if self.target_transform is not None:
-                target = self.target_transform(target)
-            #if there is no gt box, add a background one
-            if len(target) == 0:
-                target = np.asarray([[0,0,100,100,0,0]])
-                self.init_targets[name] = target
+        for scene in self.scene_list:
+            #get image names for this scene
+            cur_image_names = os.listdir(os.path.join(self.root,   
+                                                      scene,
+                                                      images_dir))
+            #sort them so they are in a known order
+            cur_image_names.sort() 
 
+            #get annotations for this scene
+            with open(os.path.join(self.root,scene,annotation_filename)) as f:
+                annotations = json.load(f)
+       
+            #for each image, get the boxes desired 
+            for name in cur_image_names:  
+                target = annotations[name]['bounding_boxes']  
+                init_targets[name] = list(target)
+                if self.target_transform is not None:
+                    target = self.target_transform(target)
+                if len(target) == 0:
+                    continue              
 
-            #for each box, record name and index in target 
-            index_counter = 0
-            for box in target:
-                assert(index_counter < len(target))
-                name_and_box_index.append([name,index_counter])
-                index_counter+=1
+  
+                #for each box, record name and index in target 
+                index_counter = 0
+                for box in target:
+                    assert(index_counter < len(target))
+                    name_and_box_index.append([name,index_counter])
+                    index_counter+=1
+            image_names.extend(cur_image_names) 
 
         self.name_and_box_index = name_and_box_index
-
-
-#    def __set_name_and_box_index_list__(self):
-#        image_names = []
-#        name_and_box_index = []
-#        init_targets = {}        
-#
-#        for scene in self.scene_list:
-#            #get image names for this scene
-#            cur_image_names = os.listdir(os.path.join(self.root,   
-#                                                      scene,
-#                                                      images_dir))
-#            #sort them so they are in a known order
-#            cur_image_names.sort() 
-#
-#            #get annotations for this scene
-#            with open(os.path.join(self.root,scene,annotation_filename)) as f:
-#                annotations = json.load(f)
-#       
-#            #for each image, get the boxes desired 
-#            for name in cur_image_names:  
-#                target = annotations[name]['bounding_boxes']  
-#                init_targets[name] = list(target)
-#                if self.target_transform is not None:
-#                    target = self.target_transform(target)
-#                #skip some fraction of images without a gt box
-#                if len(target) == 0:
-#                    if np.random.rand() > self.fraction_of_no_box:
-#                        continue    
-#                    else:
-#                        target = np.asarray([[0,0,100,100,0,0]])
-#                        init_targets[name] = target
-#
-#  
-#                #for each box, record name and index in target 
-#                index_counter = 0
-#                for box in target:
-#                    assert(index_counter < len(target))
-#                    name_and_box_index.append([name,index_counter])
-#                    index_counter+=1
-#            image_names.extend(cur_image_names) 
-#
-#        self.name_and_box_index = name_and_box_index
-#        self.image_names = image_names      
-#        self.init_targets = init_targets
+        self.image_names = image_names      
+        self.init_targets = init_targets
 
 
 
@@ -370,12 +328,9 @@ class AVD(object):
                 elif self.transform is not None:
                     img = self.transform(img)
 
-                #add image name to targets
-                target = [target, name]
-
                 #add navigation pointers if not classification
                 if not self.classification:
-                    target.append(self.init_navs[name])
+                    target = [target, self.init_navs[name]]
 
                 image_target_list.append([img,target])
                 image_list.append(img)
@@ -430,7 +385,7 @@ class AVD(object):
                 target = list(self.init_targets[image_name])
                 if self.target_transform is not None:
                     target = self.target_transform(target)
-               
+
                 #get the single box
                 target = target[box_index]
 
@@ -441,16 +396,10 @@ class AVD(object):
                     img = img[target[1]:target[3],target[0]:target[2],:]
                     target = target[4] 
 
+     
                 #apply image transform     
                 if self.transform is not None:
                     img = self.transform(img)
-                
-                #add image name to targets
-                target = [np.expand_dims(target,axis=0), image_name]
-
-                #add navigation pointers if not classification
-                if not self.classification:
-                    target.append(self.init_navs[image_name])
 
                 image_target_list.append([img,target])
                 image_list.append(img)
@@ -540,7 +489,7 @@ class AVD(object):
 
     def get_num_classes(self):
         #return len(self.get_count_by_class().keys()) 
-        return len(self.class_id_to_name.keys()) 
+        return len(self.class_id_to_name().keys()) 
 
 
     def get_name_index(self,name):
@@ -575,12 +524,8 @@ class AVD(object):
         for old_id in ids_before:
             dummy_box = [0,0,0,0,old_id,0]
             transformed_box = self.target_transform([dummy_box])
-            if len(transformed_box) > 1:
-                transformed_box = [transformed_box[-1]]
             #check to see if box is None of empty
             if transformed_box is None or not transformed_box:   
-                continue
-            if sum(transformed_box[0][0:4]) > 0:
                 continue
             new_id = transformed_box[0][4]
             new_dict[new_id] = self.class_id_to_name[old_id]
@@ -589,35 +534,6 @@ class AVD(object):
         self.class_id_to_name = new_dict
 
         return None
-
-
-    def get_original_bboxes(self):
-        """
-        Returns dict of image_name->untransformed bounding boxes
-        """
-        return self.init_targets
-
-
-
-    def get_box_difficulty(self,box):
-        """
-        Returns box difficulty measure, as defined on dataset website
-        """
-        box_dims = np.array([box[2]-box[0], box[3]-box[1]])
-        maxd = box_dims.max()
-        mind = box_dims.min()
-
-        if maxd>=300 and mind>=100:
-            return 1
-        elif maxd>=200 and mind>=75:
-            return 2
-        elif maxd>=100 and mind>=50:
-            return 3 
-        elif maxd>=50 and mind>=30:
-            return 4 
-        else:
-            return 5
-
 
 
 
