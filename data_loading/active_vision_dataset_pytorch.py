@@ -292,8 +292,10 @@ class AVD(object):
             for image_name in cur_image_names:  
                 if image_name[0] == '0':
                     scene_type = 'Home'
-                else:
+                elif image_name[0] == '1':
                     scene_type = 'Office'
+                elif image_name[0] == '2':
+                    scene_type = 'Gen'
                 scene_name = scene_type + "_" + image_name[1:4] + "_" + image_name[4]
             
                 #read the image 
@@ -332,8 +334,10 @@ class AVD(object):
                 #see format tab on Get Data page on AVD dataset website
                 if name[0] == '0':
                     scene_type = 'Home'
-                else:
+                elif name[0] == '1':
                     scene_type = 'Office'
+                elif name[0] == '2':
+                    scene_type = 'Gen'
                 scene_name = scene_type + "_" + name[1:4] + "_" + name[4]
             
                 #read the image and bounding boxes for this image
@@ -413,8 +417,10 @@ class AVD(object):
                 #see format tab on Get Data page on AVD dataset website
                 if image_name[0] == '0':
                     scene_type = 'Home'
-                else:
+                elif image_name[0] == '1':
                     scene_type = 'Office'
+                elif image_name[0] == '2':
+                    scene_type = 'Gen'
                 scene_name = scene_type + "_" + image_name[1:4] + "_" + image_name[4]
             
                 #read the image and bounding boxes for this image
