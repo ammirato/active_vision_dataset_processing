@@ -46,7 +46,7 @@ def collate(batch):
         images = images[0]
         labels = labels[0]
 
-    images = torch.stack(images)
+    #images = torch.stack(images)
     
     return [images,labels]
 
@@ -322,7 +322,8 @@ class AVD(object):
             image_name = self.image_names[index]
 
             #name_and_index needs to be alist of lists
-            if(len(image_name) >0 and type(image_name[0]) is not list): 
+            #if(len(image_name) >0 and type(image_name[0]) is not list): 
+            if(len(image_name) >0 and type(image_name) is not list): 
                 image_name = [image_name]        
      
             image_target_list = []
@@ -360,12 +361,21 @@ class AVD(object):
                     images = []
                     ids = []
                     for box in target:
-                        cur_img = img[box[1]:box[3],box[0]:box[2],:]
+                        try:
+                            cur_img = img[box[1]:box[3],box[0]:box[2],:]
+                        except:
+                            print name
+                            print box
+                            print self.root
+                            print scene_name
+                            print images_dir 
+                            print img
 
                         if self.transform is not None:
                             cur_img = self.transform(cur_img)
                         images.append(cur_img)
                         ids.append(box[4])
+                        
 
                     img = images
                     target = ids
@@ -393,6 +403,12 @@ class AVD(object):
                 target_list = target_list[0]
 
             #ureturn image_target_list
+            if len(image_list) == 0:
+                print image_name
+                print self.root
+                print scene_name
+                print images_dir 
+
             return [image_list,target_list]
 
 
