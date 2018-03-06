@@ -6,6 +6,7 @@ import visualizations.visualizations as vis
 import dataset_stats.dataset_stats as stats
 
 ROHIT_BASE_PATH = '/playpen/ammirato/Data/RohitData/'
+ROHIT_BASE_PATH = '/net/bvisionserver3/playpen10/ammirato/Data/HalvedRohitData/'
 
 
 instance_ids = [1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,19,20,

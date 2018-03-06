@@ -1,0 +1,3 @@
+from active_vision_dataset_processing.gym_active_vision_dataset.gym_active_vision_dataset.envs.active_vision_dataset_env import AVDEnv
+
+

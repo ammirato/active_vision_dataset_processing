@@ -454,7 +454,7 @@ class AddBackgroundBoxes(object):
                 counter = 0
 
             if counter > 100:
-                print 'No background box fits'
+                print('No background box fits')
                 bg_boxes.append([xmin, ymin,xmax,ymax, 0, 0])
                 counter = 100
   

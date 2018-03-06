@@ -305,7 +305,7 @@ class AVD(object):
                 images[image_name] = img
 
                 if len(images) %50 ==0:
-                    print len(images) 
+                    print(len(images))
 
         self.preload_images = True
         self.images = images 
@@ -364,12 +364,12 @@ class AVD(object):
                         try:
                             cur_img = img[box[1]:box[3],box[0]:box[2],:]
                         except:
-                            print name
-                            print box
-                            print self.root
-                            print scene_name
-                            print images_dir 
-                            print img
+                            print(name)
+                            print(box)
+                            print(self.root)
+                            print(scene_name)
+                            print(images_dir)
+                            print(img)
 
                         if self.transform is not None:
                             cur_img = self.transform(cur_img)
@@ -404,10 +404,10 @@ class AVD(object):
 
             #ureturn image_target_list
             if len(image_list) == 0:
-                print image_name
-                print self.root
-                print scene_name
-                print images_dir 
+                print(image_name)
+                print(self.root)
+                print(scene_name)
+                print(images_dir)
 
             return [image_list,target_list]
 
