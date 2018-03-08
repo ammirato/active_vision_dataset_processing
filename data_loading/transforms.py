@@ -10,60 +10,6 @@ import random
 import cv2
 import collections
 
-#Below are the transforms that depend on torch
-#Delete these to remove the torch dependency
-class ToTensor(object):
-    """
-    Converts PIL image to tensor. Does NOT normalize 
-
-    Copied from 
-    https://github.com/pytorch/vision/blob/master/torchvision/transforms.py
-
-    """    
-
-    def __call__(self,in_img):
-
-        if isinstance(in_img,np.ndarray):
-            img = np.transpose(in_img,(2,0,1))
-            img = torch.from_numpy(img)
-        elif isinstance(in_img,list):
-            img = np.asarray(in_img)
-            img = torch.from_numpy(img)
-        else:
-            # handle PIL Image
-            img = torch.ByteTensor(torch.ByteStorage.from_buffer(in_img.tobytes()))
-            # PIL image mode: 1, L, P, I, F, RGB, YCbCr, RGBA, CMYK
-            if in_img.mode == 'YCbCr':
-                nchannel = 3
-            else:
-                nchannel = len(in_img.mode)
-            img = img.view(in_img.size[1], in_img.size[0], nchannel)
-            # put it from HWC to CHW format
-            # yikes, this transpose takes 80% of the loading time/CPU
-            img = img.transpose(0, 1).transpose(0, 2).contiguous() 
-        return img
-
-
-
-
-class ToNumpy(object):
-    """
-    Converts tensor CxHxW to numpy HxWxC.
-
-
-    """
-    def __call__(self,in_img):
-
-        #remove batch demension
-        if len(in_img.size()) == 4:
-            in_img = in_img.squeeze(0)
-
-        #make sure tensor is on cpu before converting to numpy
-        npimg = in_img.cpu().numpy()
-        #make HxWxC
-        npimg = np.transpose(npimg,(1,2,0))
-        
-        return npimg
 
 
 class BGRToRGB(object):
@@ -95,54 +41,6 @@ class RGBToBGR(object):
         return np.stack((b,g,r),axis=2)
 
 
-class NormalizePlusMinusOne(object):
-    """
-    Changes an tensors's values so 0->-1 and 255->1
-
-    Assumes input is a tensor with values in [0,255] 
-    """ 
-
-    def __call__(self,tensor):
-       return (tensor.float()-127.5)/127.5
-
-
-class DenormalizePlusMinusOne(object):
-    """
-    Changes an tensors's values so -1->0 and 1->255
-
-    Assumes input is a tensor with values in [-1,1] 
-    """ 
-
-    def __call__(self,tensor):
-       return (tensor.float()*127.5) + 127.5
-
-
-class NormalizeRange(object):
-    """
-    Changes an tensors's values to be in a given range.
-
-    Assumes original values are [0,255], unless args set
-   
-    ARGS:
-        to_min: new min value  
-        to_max: new max value  
-
-    KEYWORD ARGS:
-        from_min(Float=0.0): the orignal distributions min value
-        from_max(Float=255.0): the orignal distributions max value
-
-    Follows http://stackoverflow.com/questions/5294955/how-to-scale-down-a-range-of-numbers-with-a-known-min-and-max-value 
-
-    """ 
-    def __init__(self,to_min,to_max,from_min=0.0,from_max=255.0):
-        self.to_min = to_min
-        self.to_max = to_max 
-        self.from_min = from_min
-        self.from_max = from_max
-
-    def __call__(self,tensor):
-        scale = (self.to_max-self.to_min)/(self.from_max-self.from_min)
-        return scale*(tensor.float() - self.from_min) + self.to_min 
 
 
 class MeanSTDNormalize(object):
@@ -163,57 +61,6 @@ class MeanSTDNormalize(object):
 
     def __call__(self,array):
            return (array-self.mean)/self.std 
-
-class ToPILImage(object):
-    """
-    Converts tensor to PIL Image. Does not change any values in tensor.
-
-    Copied from 
-    https://github.com/pytorch/vision/blob/master/torchvision/transforms.py
-    """
-
-    def __call__(self,tensor):
-        npimg = tensor.numpy()
-        npimg = np.transpose(npimg,(1,2,0))
-        return Image.fromarray(npimg.astype(np.uint8)) 
-
-
-
-
-## END TORCH DEPENDENCY
-##############################################################################
-
-
-
-#https://github.com/pytorch/vision/blob/master/torchvision/transforms.py
-class Compose(object):
-      """
-      Composes several transforms together.
-
-      Copied from 
-      https://github.com/pytorch/vision/blob/master/torchvision/transforms.py 
-
-      Args:
-          transforms (List[Transform]): list of transforms to compose.
-      Example:
-           transforms.Compose([
-               transforms.AddPerturbedBoxes(),
-               transforms.ValidateMinMaxBoxes(),
-           ])
-      """
-
-      def __init__(self, transforms):
-          self.transforms = transforms
-
-      def __call__(self, data):
-          for t in self.transforms:
-              data = t(data)
-          return data 
-
-
-
-
-
 
 
 
@@ -499,24 +346,6 @@ class MakeIdsConsecutive(object):
             consecutive_targets.append(box) 
 
         return consecutive_targets
-
-
-#        if len(boxes) == 0:
-#            return boxes
-#        if isinstance(boxes[0], collections.Iterable):
-#            for il in range(len(boxes)):
-#                boxes[il][4] = self.id_map[boxes[il][4]]
-#        else: #assume just one box
-#            boxes[il][4] = self.id_map[boxes[il][4]]
-#            
-#        return boxes 
-
-        
-
-
-
-
-
 
 
 

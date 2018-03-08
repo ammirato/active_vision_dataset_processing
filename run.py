@@ -31,12 +31,6 @@ all_scenes_list = [
 ]
 
 
-
-
-
-
-
-
 function_name = sys.argv[1]
 if len(sys.argv) > 2:
     scene_name = sys.argv[2]
