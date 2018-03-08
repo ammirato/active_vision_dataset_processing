@@ -10,29 +10,6 @@ images_dir = 'jpg_rgb'
 annotation_filename = 'annotations.json'
 
 
-#http://pytorch.org/docs/_modules/torch/utils/data/dataloader.html#DataLoader
-def collate_old(batch):
-    if isinstance(batch[0],torch.LongTensor):#detection box labels
-        return batch 
-    elif isinstance(batch[0],int):#classification id labels
-        return torch.from_numpy(np.array(batch))
-    elif isinstance(batch[0],torch.FloatTensor):#images
-        return torch.stack(batch)
-    elif isinstance(batch[0],torch.ByteTensor):#images
-        return torch.stack(batch)
-    elif isinstance(batch[0], collections.Iterable):#list[images,labels]
-        #transposed = zip(*batch)
-        try:
-            images = []
-            labels = []
-            for img,label in batch:
-                images.append(img)
-                labels.append(label)
-            transposed = [images,labels]
-            return [collate(samples) for samples in transposed] 
-        except:
-            breakp = 1
-
 def collate(batch):
     images = []
     labels = []
@@ -61,11 +38,6 @@ class AVD(object):
     to access. 
 
     """
-    #TODO - too much copy/paste with AVD
-    #     - allow __getitem__ to take a name
-    #     - fix problems when not all chosen ids are present
-    #       i.e in count by class, class_id_to_name, etc
-
     #these are the train/test split 1 used in our original paper
     default_train_list = [
                           'Home_002_1',
