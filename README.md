@@ -1,5 +1,7 @@
 # Active Vision Dataset Processing
 
+If you are looking for the old repository, pre March 2018, it is [here](https://github.com/pammirato/active_vision_dataset_processing)
+
 This project contains Python and MATLAB scripts for processing the
  [Active Vision Dataset](http://cs.unc.edu/~ammirato/active_vision_dataset_website/index.html)
 
