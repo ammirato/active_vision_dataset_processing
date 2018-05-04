@@ -63,7 +63,8 @@ class AVD(object):
 
     def __init__(self, root, train=True, transform=None, target_transform=None, 
                  scene_list=None, classification=False, preload_images=False,
-                 by_box=False, class_id_to_name=None, fraction_of_no_box=1):
+                 by_box=False, class_id_to_name=None, fraction_of_no_box=1,
+                 img_target_transform=None):
         """
         Create instance of AVDd class
 
@@ -101,6 +102,9 @@ class AVD(object):
                                   be applied by this object.  
           fraction_of_no_box(float=1): fraction of images without a ground
                                      truth box to keep(1 keeps all of them)
+          img_target_transform(None): transform that takes both image and 
+                                      targets as input. Applied directly
+                                      before target transform would be applied.
                  
         """
 
@@ -111,6 +115,7 @@ class AVD(object):
         self.train = train # training set or test set
         self.class_id_to_name = class_id_to_name 
         self.fraction_of_no_box = fraction_of_no_box       
+        self.img_target_transform = img_target_transform
  
         #if no inputted scene list, use defaults 
         if scene_list == None:
@@ -323,6 +328,8 @@ class AVD(object):
 
                 #get the target and apply transform
                 target = list(self.init_targets[name])
+                if self.img_target_transform is not None:
+                    img,target = self.img_target_transform(img,target)
                 if self.target_transform is not None:
                     target = self.target_transform(target)
 
@@ -352,8 +359,10 @@ class AVD(object):
                     target = ids
      
                 #apply image transform if  not classification     
-                elif self.transform is not None:
-                    img = self.transform(img)
+                #elif self.transform is not None:
+                else:
+                    if self.transform is not None:
+                        img = self.transform(img)
 
                 #add image name to targets
                 target = [target, name]
@@ -437,6 +446,8 @@ class AVD(object):
                 #apply image transform     
                 if self.transform is not None:
                     img = self.transform(img)
+                if self.img_target_transform is not None:
+                    img,target = self.img_target_transform(img,target)
                 
                 #add image name to targets
                 target = [np.expand_dims(target,axis=0), image_name]

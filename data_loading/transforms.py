@@ -498,3 +498,24 @@ class AddRandomBoxes(object):
         #targets.extend(bg_boxes)
         #return targets
 
+
+
+class BlackOutObjects(object):
+    """
+    Replaces boxes in images with all zeros.
+
+    ARGS: 
+        obj_ids: the object ids that are to be blacked out 
+    """
+    #TODO: add functionality for tensors
+
+    def __init__(self,obj_ids):
+        self.obj_ids = obj_ids
+
+    def __call__(self,img,target):
+        for box in target:
+            if box[4] in self.obj_ids:
+                img[box[1]:box[3], box[0]:box[2],:] = 0            
+
+        return img, target
+
