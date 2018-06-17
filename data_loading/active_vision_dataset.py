@@ -3,7 +3,6 @@ import numpy as np
 import sys
 import json
 import cv2
-import torch
 import collections
 
 images_dir = 'jpg_rgb'
@@ -17,7 +16,6 @@ def collate(batch):
         images.append(img)
         labels.append(label)
     if isinstance(labels[0],int):#classification id labels
-        #labels = torch.from_numpy(np.array(labels))
         labels = np.array(labels)
 
     if len(images) == 1:
